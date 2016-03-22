@@ -1,7 +1,7 @@
 package akrupych.dayquote;
 
 import android.content.Context;
-import android.util.Log;
+import android.content.Intent;
 import android.widget.RemoteViews;
 import android.widget.RemoteViewsService;
 
@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
@@ -44,6 +43,7 @@ public class MyRemoteViewsFactory implements RemoteViewsService.RemoteViewsFacto
         if (position == 1) {
             RemoteViews quoteView = new RemoteViews(context.getPackageName(), R.layout.quote);
             quoteView.setTextViewText(R.id.quote, getNextQuote());
+            quoteView.setOnClickFillInIntent(R.id.quote, new Intent());
             return quoteView;
         }
         return new RemoteViews(context.getPackageName(), position == 0 ? R.layout.top_decor : R.layout.bottom_decor);
@@ -71,21 +71,16 @@ public class MyRemoteViewsFactory implements RemoteViewsService.RemoteViewsFacto
 
     private String getNextQuote() {
         try {
-            Random random = new Random();
-            String[] files = context.getAssets().list("data");
-            Log.d("qwerty", Arrays.toString(files));
-            String selectedFile = files[random.nextInt(files.length)];
-            List<String> quotes = parseQuotes(selectedFile);
-            return quotes.get(random.nextInt(quotes.size()));
+            List<String> quotes = parseQuotes(context.getAssets().open("data/path.txt"));
+            return quotes.get(new Random().nextInt(quotes.size()));
         } catch (IOException e) {
             e.printStackTrace();
             return "...";
         }
     }
 
-    private List<String> parseQuotes(String fileName) throws IOException {
+    private List<String> parseQuotes(InputStream stream) throws IOException {
         List<String> quotes = new ArrayList<>();
-        InputStream stream = context.getAssets().open("data/" + fileName);
         BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
         for (String line = reader.readLine(); line != null; line = reader.readLine()) {
             if (!line.isEmpty()) {
